@@ -1,6 +1,6 @@
 services:
   openclaw-gateway:
-    image: alpine/openclaw:latest
+    image: ${OPENCLAW_IMAGE:-openclaw:local}
     environment:
       HOME: /home/node
       TERM: xterm-256color
@@ -14,8 +14,9 @@ services:
       - proxy
     expose:
       - "18789"
+    init: true
     restart: unless-stopped
-    command: ["gateway","--bind","lan","--port","18789"]
+    command: ["node","dist/index.js","gateway","--bind","lan","--port","18789"]
 
 volumes:
   openclaw_config:
