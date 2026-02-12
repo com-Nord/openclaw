@@ -6,50 +6,77 @@ services:
     container_name: openclaw-gateway
     init: true
     restart: unless-stopped
+
     environment:
       HOME: /home/node
       TERM: xterm-256color
+
+      # Auth / Provider
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-      OPENCLAW_GATEWAY_URL: ws://openclaw-gateway:18789
-      OPENCLAW_GATEWAY_WS: ws://openclaw-gateway:18789
+
+      # Optional (wenn nicht genutzt, in .env leer lassen oder weglassen)
+      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
+      CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
+      CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
+
     volumes:
       - openclaw_config:/home/node/.openclaw
       - openclaw_workspace:/home/node/.openclaw/workspace
+
     networks:
       - proxy
+
+    # nur intern für NPM sichtbar (kein direkter Internet-Port!)
     expose:
       - "18789"
+      - "18790"
+
+    # WICHTIG: bind=lan (sonst bleibt es loopback-only und CLI/NPM klemmt)
     command: ["node","dist/index.js","gateway","--bind","lan","--port","18789"]
 
+
+  # Toolbox-Container: bleibt laufen, damit du per Portainer/SSH commands ausführen kannst
   openclaw-cli:
     image: ${OPENCLAW_IMAGE:-openclaw:local}
     container_name: openclaw-cli
     init: true
     restart: unless-stopped
+
     environment:
       HOME: /home/node
       TERM: xterm-256color
+
+      # Damit die CLI NICHT auf 127.0.0.1 geht:
+      # (falls deine OpenClaw-Version diese Variablen ignoriert, siehe Hinweis unten)
+      OPENCLAW_GATEWAY_URL: ws://openclaw-gateway:18789
+      OPENCLAW_GATEWAY_WS: ws://openclaw-gateway:18789
+
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+
       BROWSER: echo
-      OPENCLAW_GATEWAY_URL: ws://openclaw-gateway:18789
-      OPENCLAW_GATEWAY_WS: ws://openclaw-gateway:18789
+
     volumes:
       - openclaw_config:/home/node/.openclaw
       - openclaw_workspace:/home/node/.openclaw/workspace
+
     networks:
       - proxy
+
     stdin_open: true
     tty: true
+
     entrypoint: ["/bin/sh","-lc"]
     command: ["sleep infinity"]
+
 
 volumes:
   openclaw_config:
   openclaw_workspace:
+
 
 networks:
   proxy:
