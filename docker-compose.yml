@@ -2,25 +2,16 @@ version: "3.9"
 
 services:
   openclaw-gateway:
-    image: ${OPENCLAW_IMAGE:-alpine/openclaw:latest}
+    image: ${OPENCLAW_IMAGE:-openclaw:local}
     container_name: openclaw-gateway
     init: true
     restart: unless-stopped
     environment:
       HOME: /home/node
       TERM: xterm-256color
-
-      # Core
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
-
-      # Integrationen
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-
-      # Optional (leer lassen, wenn nicht genutzt)
-      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
-      CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
-      CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
     volumes:
       - openclaw_config:/home/node/.openclaw
       - openclaw_workspace:/home/node/.openclaw/workspace
@@ -28,13 +19,10 @@ services:
       - proxy
     expose:
       - "18789"
-      - "18790"
-    # Entrypoint-Safe: funktioniert auch, wenn ENTRYPOINT=openclaw ODER node ist
-    command: ["gateway", "--bind", "${OPENCLAW_GATEWAY_BIND:-lan}", "--port", "18789"]
+    command: ["node","dist/index.js","gateway","--bind","lan","--port","18789"]
 
-  # Dauerhaft laufender "Toolbox"-Container für Setup/Onboard/Doctor ohne SSH
   openclaw-cli:
-    image: ${OPENCLAW_IMAGE:-alpine/openclaw:latest}
+    image: ${OPENCLAW_IMAGE:-openclaw:local}
     container_name: openclaw-cli
     init: true
     restart: unless-stopped
@@ -45,9 +33,6 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       BROWSER: echo
-      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
-      CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
-      CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
     volumes:
       - openclaw_config:/home/node/.openclaw
       - openclaw_workspace:/home/node/.openclaw/workspace
@@ -55,7 +40,7 @@ services:
       - proxy
     stdin_open: true
     tty: true
-    entrypoint: ["/bin/sh", "-lc"]
+    entrypoint: ["/bin/sh","-lc"]
     command: ["sleep infinity"]
 
 volumes:
