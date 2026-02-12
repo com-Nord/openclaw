@@ -1,5 +1,4 @@
-services:
-  openclaw-gateway:
+  openclaw-cli:
     image: ${OPENCLAW_IMAGE:-openclaw:local}
     environment:
       HOME: /home/node
@@ -7,21 +6,15 @@ services:
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      BROWSER: echo
     volumes:
       - openclaw_config:/home/node/.openclaw
       - openclaw_workspace:/home/node/.openclaw/workspace
     networks:
       - proxy
-    expose:
-      - "18789"
+    stdin_open: true
+    tty: true
     init: true
+    entrypoint: ["/bin/sh","-lc"]
+    command: ["sleep infinity"]
     restart: unless-stopped
-    command: ["node","dist/index.js","gateway","--bind","lan","--port","18789"]
-
-volumes:
-  openclaw_config:
-  openclaw_workspace:
-
-networks:
-  proxy:
-    external: true
